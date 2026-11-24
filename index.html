@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cidade das Palavras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: brincalhão e enérgico, cartaz de cidade ao pôr do sol, para crianças de 11-12 anos.
+   IDEA: um jogo de cidade aberta em que cada prédio famoso guarda uma missão de português.
+   PICTURE: o próprio mapa da cidade, visto de cima, com carro, trânsito e o Fiscal da Gramática.
+   COLOUR and TYPE: coral do pôr do sol domina, verde-petróleo profundo de apoio, amarelo-placa de destaque; Bungee (letreiro) + Nunito.
+   LAYOUT: tela inicial em cartaz com formulário e ranking; jogo em tela cheia com HUD nas bordas. */
+:root{color-scheme:light dark;--bg:light-dark(#fff4ec,#1a1016);--ink:light-dark(#22161c,#fbeee6);--card:light-dark(#ffffff,#2a1a22);--line:light-dark(#f1d9cb,#4a2e3a);--sun:#ff6b4a;--sun2:#ff9a3c;--teal:#0f3b47;--yel:#ffd23f;--ok:#1f9d55;--bad:#d7263d;--muted:light-dark(#6b5560,#c9b2bc)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.bung{font-family:Bungee,Impact,sans-serif;font-weight:400;line-height:1.05;margin:0}
+button,input,select{font:inherit}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px)}
+.hero{background:linear-gradient(180deg,#ff5f6d 0%,var(--sun) 45%,var(--sun2) 100%);color:#2b0d12;position:relative;overflow:hidden;padding-bottom:0}
+.hero-in{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:end}
+.hero h1{font-size:clamp(36px,6vw,64px);color:#fff;text-shadow:4px 4px 0 #2b0d12;text-wrap:balance}
+.hero p.sub{font-size:18px;font-weight:800;margin:10px 0 18px;max-width:34ch}
+.sky{width:100%;height:auto;display:block}
+.form{background:#fff;color:#22161c;border-radius:18px;padding:18px;box-shadow:0 8px 0 #2b0d12;margin-bottom:28px;display:grid;gap:12px;max-width:460px}
+.form label{display:grid;gap:4px;font-weight:800;font-size:14px}
+.form input{border:2px solid #2b0d12;border-radius:12px;padding:10px 12px;font-size:16px;min-height:44px;background:#fff;color:#22161c}
+.form input:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
+.row2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px}
+.btn{border:0;border-radius:14px;min-height:48px;padding:10px 20px;font-family:Bungee,Impact,sans-serif;font-size:18px;cursor:pointer;background:var(--teal);color:#fff;box-shadow:0 5px 0 #071c22;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #071c22}
+.btn.alt{background:var(--yel);color:#2b0d12;box-shadow:0 5px 0 #a8820e}
+.btn.ghost{background:transparent;color:inherit;box-shadow:none;border:2px solid currentColor;font-size:15px}
+.err{color:var(--bad);font-weight:800;font-size:14px;min-height:1.2em;margin:0}
+.wrap{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:28px}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:20px}
+.panel h2{font-size:24px;margin-bottom:12px}
+.how{margin:0;padding-left:1.2em}.how li{margin:6px 0}
+.keys{display:inline-block;border:2px solid var(--line);border-radius:6px;padding:0 6px;font-weight:800;font-size:14px}
+.rk-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rk-head select{border:2px solid var(--line);border-radius:10px;min-height:40px;padding:4px 8px;background:var(--card);color:var(--ink)}
+.src{font-size:13px;color:var(--muted);margin:0 0 8px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:13px;color:var(--muted)}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr.me td{background:light-dark(#fff2b8,#4a3a10);font-weight:800}
+.pos{font-family:Bungee,Impact,sans-serif;width:2.2em}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tools .btn{font-size:13px;min-height:44px;padding:6px 12px}
+.empty{color:var(--muted);padding:12px 0}
+.topics{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.topics span{font-size:13px;border-radius:999px;padding:3px 10px;color:#fff;font-weight:800}
+/* jogo */
+#game{position:fixed;inset:0;background:#2a2c33;touch-action:none;user-select:none;-webkit-user-select:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;pointer-events:none;color:#fff;text-shadow:2px 2px 0 #000}
+#hudL{top:10px;left:12px}
+#pts{font-family:Bungee,Impact,sans-serif;font-size:clamp(26px,4vw,40px);color:#9cff57;letter-spacing:1px}
+#combo{font-family:Bungee,Impact,sans-serif;font-size:16px;color:var(--yel);min-height:1.2em}
+#info{font-weight:800;font-size:14px}
+#hudR{top:10px;right:12px;display:grid;justify-items:end;gap:6px}
+#mini{width:150px;height:150px;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px #000;background:#3b3d46}
+#stars{display:flex;gap:2px}
+#stars svg{width:22px;height:22px}
+#chase{font-family:Bungee,Impact,sans-serif;font-size:15px;color:#ffd23f;text-align:right;min-height:1.2em}
+#mission{left:50%;transform:translateX(-50%);bottom:14px;background:rgba(15,59,71,.92);border:3px solid #fff;border-radius:14px;padding:8px 16px;text-align:center;max-width:min(92vw,640px);text-shadow:none;font-weight:800}
+#mission b{font-family:Bungee,Impact,sans-serif;font-weight:400;color:var(--yel)}
+#toast{left:50%;top:22%;transform:translateX(-50%);font-family:Bungee,Impact,sans-serif;font-size:clamp(22px,4vw,38px);text-align:center;opacity:0;transition:opacity .3s;white-space:nowrap}
+#topBtns{position:absolute;top:124px;left:12px;display:flex;gap:6px}
+#topBtns button{pointer-events:auto;min-height:44px;min-width:44px;border-radius:12px;border:2px solid #fff;background:rgba(0,0,0,.55);color:#fff;font-weight:800;cursor:pointer;padding:0 10px}
+.touch{position:absolute;bottom:70px;display:none;gap:10px}
+.touch button{pointer-events:auto;width:64px;height:64px;border-radius:50%;border:3px solid #fff;background:rgba(0,0,0,.45);color:#fff;font-size:22px;font-weight:800;touch-action:none}
+#tL{left:14px}#tR{right:14px}
+@media (pointer:coarse),(max-width:700px){.touch{display:flex}#mission{bottom:146px}}
+@media (max-width:600px){#mini{width:110px;height:110px}}
+/* diálogo */
+#dlg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,12,.55);padding:16px;overflow:auto}
+#dlg.on{display:flex}
+.card{background:#fff;color:#22161c;border-radius:20px;max-width:620px;width:100%;box-shadow:0 10px 0 #000;overflow:hidden}
+.card-top{display:flex;gap:14px;align-items:center;padding:16px 18px;color:#fff}
+.av{width:58px;height:58px;flex:none}
+.card-top h3{font-size:20px}
+.card-top small{font-weight:800;opacity:.95}
+.card-b{padding:16px 18px 18px}
+.q{font-size:18px;font-weight:800;margin:0 0 12px}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;border:2px solid #22161c;border-radius:12px;background:#fff;color:#22161c;min-height:48px;padding:8px 12px;cursor:pointer;font-weight:700;font-size:16px}
+.opt .l{font-family:Bungee,Impact,sans-serif;width:28px;height:28px;border-radius:8px;background:#22161c;color:#fff;display:grid;place-items:center;flex:none;font-size:14px}
+.opt:hover{background:#fff6d6}
+.opt.ok{background:#d9f7e4;border-color:var(--ok)}.opt.ok .l{background:var(--ok)}
+.opt.no{background:#fde0e4;border-color:var(--bad)}.opt.no .l{background:var(--bad)}
+.opt[disabled]{cursor:default}
+.fb{margin-top:12px;border-radius:12px;padding:10px 12px;display:none}
+.fb.on{display:block}
+.fb.ok{background:#d9f7e4}.fb.no{background:#fde0e4}
+.fb strong{font-family:Bungee,Impact,sans-serif;font-weight:400}
+.fb .btn{margin-top:10px;width:100%}
+/* fim */
+.endhero{background:var(--teal);color:#fff}
+.endhero .in{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:center}
+.big{font-family:Bungee,Impact,sans-serif;font-size:clamp(48px,9vw,96px);color:#9cff57;line-height:1;text-shadow:4px 4px 0 #000}
+.rank-title{font-family:Bungee,Impact,sans-serif;color:var(--yel);font-size:clamp(22px,3vw,32px)}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.stats div{background:rgba(255,255,255,.12);border-radius:12px;padding:8px 14px;font-weight:800}
+.rev{display:grid;gap:10px}
+.rev article{border:2px solid var(--line);border-left-width:8px;border-radius:12px;padding:10px 12px;background:var(--card)}
+.rev article.ok{border-left-color:var(--ok)}.rev article.no{border-left-color:var(--bad)}
+.rev p{margin:4px 0}
+.rev .t{font-size:13px;font-weight:800;color:var(--muted)}
+@media(max-width:860px){.hero-in,.wrap,.endhero .in{grid-template-columns:minmax(0,1fr)}.sky{max-height:260px}}
+@media(max-width:600px){table{font-size:13px}.row2{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<main id="start">
+  <section class="band hero">
+    <div class="hero-in">
+      <div>
+        <h1>Cidade das Palavras</h1>
+        <p class="sub">Dirija pela cidade, encontre os moradores e cumpra 10 missões de Língua Portuguesa. 6º ano · nível médio.</p>
+        <form class="form" id="f" autocomplete="off">
+          <div class="row2">
+            <label>Seu nome<input id="nome" maxlength="24" placeholder="Ex.: Ana Clara" required></label>
+            <label>Turma<input id="turma" maxlength="10" placeholder="Ex.: 6ºA" required></label>
+          </div>
+          <p class="err" id="ferr"></p>
+          <button class="btn" type="submit">Entrar na cidade</button>
+          <p style="margin:0;font-size:13px">Cada aluno recebe uma rota própria: as questões, a ordem das missões e a ordem das alternativas mudam conforme o nome, a turma e a tentativa.</p>
+        </form>
+      </div>
+      <svg class="sky" viewBox="0 0 600 380" aria-hidden="true">
+        <defs><linearGradient id="road" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3b3d46"/><stop offset="1" stop-color="#25262c"/></linearGradient></defs>
+        <circle cx="430" cy="150" r="78" fill="#ffe27a"/><circle cx="430" cy="150" r="104" fill="#ffe27a" opacity=".25"/>
+        <g fill="#2b0d12" opacity=".35"><rect x="10" y="140" width="60" height="180"/><rect x="80" y="110" width="46" height="210"/><rect x="300" y="130" width="70" height="190"/><rect x="520" y="100" width="70" height="220"/></g>
+        <g><rect x="40" y="170" width="90" height="160" fill="#0f3b47"/><rect x="140" y="120" width="80" height="210" fill="#155263"/><rect x="230" y="190" width="100" height="140" fill="#0f3b47"/><rect x="340" y="150" width="76" height="180" fill="#1b6577"/><rect x="426" y="200" width="110" height="130" fill="#0f3b47"/><rect x="540" y="160" width="60" height="170" fill="#155263"/>
+        <rect x="246" y="170" width="68" height="26" rx="4" fill="#ffd23f"/><text x="280" y="189" text-anchor="middle" font-family="Bungee,Impact" font-size="13" fill="#2b0d12">PADARIA</text>
+        <rect x="438" y="180" width="86" height="26" rx="4" fill="#ffd23f"/><text x="481" y="199" text-anchor="middle" font-family="Bungee,Impact" font-size="12" fill="#2b0d12">BIBLIOTECA</text></g>
+        <g fill="#ffd23f" opacity=".85"><rect x="56" y="190" width="14" height="18"/><rect x="96" y="190" width="14" height="18"/><rect x="56" y="226" width="14" height="18"/><rect x="156" y="140" width="14" height="18"/><rect x="190" y="176" width="14" height="18"/><rect x="156" y="212" width="14" height="18"/><rect x="356" y="170" width="14" height="18"/><rect x="390" y="206" width="14" height="18"/><rect x="556" y="180" width="14" height="18"/><rect x="452" y="230" width="14" height="18"/><rect x="490" y="262" width="14" height="18"/></g>
+        <rect x="0" y="330" width="600" height="50" fill="url(#road)"/>
+        <g fill="#ffd23f"><rect x="20" y="352" width="40" height="5"/><rect x="100" y="352" width="40" height="5"/><rect x="180" y="352" width="40" height="5"/><rect x="420" y="352" width="40" height="5"/><rect x="500" y="352" width="40" height="5"/></g>
+        <g transform="translate(250 334)"><rect x="0" y="10" width="120" height="30" rx="10" fill="#ff3d6e"/><path d="M24 12 L40 -8 H86 L102 12 Z" fill="#ff3d6e"/><path d="M34 10 L45 -3 H62 V10Z M68 10 V-3 H82 L93 10Z" fill="#bfe9ff"/><circle cx="28" cy="40" r="11" fill="#111"/><circle cx="92" cy="40" r="11" fill="#111"/><circle cx="28" cy="40" r="4" fill="#ccc"/><circle cx="92" cy="40" r="4" fill="#ccc"/><rect x="112" y="18" width="8" height="7" rx="2" fill="#ffe27a"/></g>
+      </svg>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <div class="panel">
+        <h2>Como jogar</h2>
+        <ol class="how">
+          <li>Dirija com <span class="keys">↑</span> <span class="keys">↓</span> <span class="keys">←</span> <span class="keys">→</span> ou <span class="keys">W A S D</span>. No celular, use os botões da tela.</li>
+          <li>Siga a seta amarela e o ponto piscando no radar até o prédio da missão.</li>
+          <li>Pare no círculo luminoso: o morador faz uma pergunta. Responda clicando ou com as teclas <span class="keys">1</span>–<span class="keys">4</span>.</li>
+          <li>Acerto rápido vale mais. Acertos seguidos multiplicam os pontos (até ×2).</li>
+          <li>Errou? O <b>Fiscal da Gramática</b> sai atrás de você por 20 segundos. Se ele te alcançar, você perde pontos.</li>
+          <li>Pegue os livros espalhados nas ruas: +10 pontos cada.</li>
+        </ol>
+        <div class="topics" id="topics"></div>
+      </div>
+      <div class="panel" id="rkStart"></div>
+    </div>
+  </section>
+</main>
+
+<div id="game" hidden>
+  <canvas id="cv"></canvas>
+  <div class="hud" id="hudL"><div id="pts">0</div><div id="combo"></div><div id="info"></div></div>
+  <div class="hud" id="hudR"><canvas id="mini" width="150" height="150"></canvas><div id="stars"></div><div id="chase"></div></div>
+  <div id="topBtns"><button id="bPause" type="button" aria-label="Pausar">II</button><button id="bQuit" type="button">Sair</button></div>
+  <div class="hud" id="mission"></div>
+  <div class="hud" id="toast"></div>
+  <div class="touch" id="tL"><button type="button" data-k="left" aria-label="Virar à esquerda">◀</button><button type="button" data-k="right" aria-label="Virar à direita">▶</button></div>
+  <div class="touch" id="tR"><button type="button" data-k="down" aria-label="Frear">▼</button><button type="button" data-k="up" aria-label="Acelerar">▲</button></div>
+  <div id="dlg" role="dialog" aria-modal="true"><div class="card" id="card"></div></div>
+</div>
+
+<main id="end" hidden>
+  <section class="band endhero">
+    <div class="in">
+      <div>
+        <p style="margin:0;font-weight:800" id="endWho"></p>
+        <div class="big" id="endPts">0</div>
+        <div class="rank-title" id="endTitle"></div>
+        <div class="stats" id="endStats"></div>
+        <div class="tools"><button class="btn alt" id="again" type="button">Jogar de novo (nova rota)</button><button class="btn ghost" id="home" type="button">Tela inicial</button></div>
+      </div>
+      <div class="panel" id="rkEnd" style="color:var(--ink)"></div>
+    </div>
+  </section>
+  <section class="band">
+    <div style="max-width:900px;margin:0 auto">
+      <h2 style="font-size:28px;margin-bottom:12px">Revisão das missões</h2>
+      <div class="rev" id="rev"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+{
+/* ================= BANCO DE QUESTÕES (alternativa correta sempre na posição 0; embaralhada no jogo) ================= */
+const TEMAS=[
+{t:'Acentuação e sílabas',quem:'Seu Circunflexo',lugar:'Banca de Jornal',placa:'BANCA',cor:'#ff8a3d',qs:[
+ {p:'Na palavra "lâmpada", a sílaba tônica é a antepenúltima (lâm). Por isso, ela é:',o:['proparoxítona','paroxítona','oxítona','monossílaba'],e:'Quando a sílaba mais forte é a antepenúltima, a palavra é proparoxítona: LÂM-pa-da.'},
+ {p:'Qual destas palavras é oxítona?',o:['café','mesa','árvore','lápis'],e:'Em ca-FÉ, a sílaba tônica é a última. Mesa e lápis são paroxítonas; árvore é proparoxítona.'},
+ {p:'Todas as proparoxítonas da língua portuguesa recebem acento gráfico. Qual palavra segue essa regra?',o:['médico','saúde','herói','fácil'],e:'MÉ-di-co é proparoxítona. Saúde e fácil são paroxítonas; herói é oxítona.'},
+ {p:'Qual alternativa apresenta uma palavra paroxítona?',o:['caderno','jacaré','sábado','Pará'],e:'Em ca-DER-no, a sílaba tônica é a penúltima. Jacaré e Pará são oxítonas; sábado é proparoxítona.'},
+ {p:'Em qual frase há ERRO de acentuação?',o:['Hoje é sabado.','O ônibus chegou cedo.','Ele comprou um sofá.','A juíza falou com o réu.'],e:'"Sábado" é proparoxítona e, por isso, precisa de acento: sá-ba-do.'},
+ {p:'Quantas sílabas tem a palavra "passarinho"?',o:['4','3','5','6'],e:'Separando: pas-sa-ri-nho. O "ss" se separa, e o "nh" fica junto na mesma sílaba.'}]},
+{t:'Ortografia',quem:'Dona Cedilha',lugar:'Agência dos Correios',placa:'CORREIOS',cor:'#e94f64',qs:[
+ {p:'Qual palavra está escrita corretamente?',o:['exceção','esceção','excessão','exseção'],e:'A grafia correta é "exceção", com xc e ç.'},
+ {p:'Em qual grupo TODAS as palavras estão escritas corretamente?',o:['chuva, xícara, enxada','xuva, chícara, enchada','chuva, chícara, enxada','xuva, xícara, enchada'],e:'Escreve-se chuva (ch), xícara (x) e enxada (x depois de "en").'},
+ {p:'O sufixo -eza forma substantivos a partir de adjetivos (belo → beleza). Qual palavra está correta?',o:['tristeza','tristesa','tristessa','tristeça'],e:'De "triste" vem "tristeza", com o sufixo -eza (com z).'},
+ {p:'Complete: "O ___ entrou no ônibus e procurou um lugar."',o:['passageiro','pasageiro','passajeiro','pasajeiro'],e:'"Passageiro" se escreve com ss e com g, como em "passagem".'},
+ {p:'Em qual alternativa TODAS as palavras estão corretas?',o:['girafa, jeito, gelo','jirafa, geito, gelo','girafa, geito, jelo','jirafa, jeito, jelo'],e:'Girafa e gelo se escrevem com g; jeito se escreve com j.'},
+ {p:'O ç nunca aparece no início de palavra nem antes de "e" ou "i". Qual palavra usa o ç corretamente?',o:['açúcar','çapato','çebola','açeite'],e:'Em "açúcar", o ç vem antes de "u". As outras corretas são sapato, cebola e azeite.'}]},
+{t:'Substantivo e adjetivo',quem:'Mestre Nome',lugar:'Feira Livre',placa:'FEIRA',cor:'#2bb673',qs:[
+ {p:'Na frase "O menino curioso abriu a caixa velha", os adjetivos são:',o:['curioso e velha','menino e caixa','abriu e caixa','o e a'],e:'Curioso e velha caracterizam os substantivos menino e caixa: são adjetivos.'},
+ {p:'Qual é o substantivo coletivo de "lobos"?',o:['alcateia','cardume','enxame','rebanho'],e:'Alcateia é o grupo de lobos. Cardume é de peixes; enxame, de abelhas; rebanho, de gado.'},
+ {p:'Qual destes substantivos é abstrato?',o:['saudade','mesa','cachorro','vento'],e:'Saudade é um sentimento: depende de alguém para existir. Por isso é abstrato.'},
+ {p:'Em "A cidade acordou com o barulho dos carros", a palavra "barulho" é:',o:['substantivo','adjetivo','verbo','advérbio'],e:'"Barulho" nomeia algo e vem acompanhado do artigo "o": é substantivo.'},
+ {p:'Qual é o feminino de "ator"?',o:['atriz','atora','atoriz','atôra'],e:'O feminino de ator é atriz.'},
+ {p:'Em "um menino inteligentíssimo", o adjetivo está no grau:',o:['superlativo','comparativo','diminutivo','aumentativo'],e:'O sufixo -íssimo indica o grau superlativo absoluto sintético: muito inteligente.'}]},
+{t:'Verbos',quem:'Capitã Ação',lugar:'Estação de Trem',placa:'ESTAÇÃO',cor:'#7a5cff',qs:[
+ {p:'Em "Amanhã nós viajaremos para a praia", o verbo está no:',o:['futuro do presente','pretérito perfeito','presente','pretérito imperfeito'],e:'"Viajaremos" indica uma ação que ainda vai acontecer: futuro do presente.'},
+ {p:'Qual frase tem o verbo no pretérito perfeito?',o:['Ontem eu corri no parque.','Eu corro todo dia.','Eu correrei amanhã.','Eu corria quando era pequeno.'],e:'"Corri" indica uma ação passada e concluída. "Corria" é pretérito imperfeito.'},
+ {p:'Em "Feche a porta, por favor", o verbo está no modo:',o:['imperativo','indicativo','subjuntivo','gerúndio'],e:'O imperativo expressa ordem, pedido ou conselho. (Gerúndio não é modo verbal.)'},
+ {p:'Qual é o infinitivo do verbo em "Eles fizeram o trabalho"?',o:['fazer','fizer','feito','fazerem'],e:'"Fizeram" é uma forma do verbo fazer.'},
+ {p:'Complete: "Se eu ___ tempo, iria ao cinema."',o:['tivesse','tenho','terei','tive'],e:'Para uma hipótese ligada a "iria", usa-se o subjuntivo: "Se eu tivesse".'},
+ {p:'Em "Os alunos estudavam quando a luz acabou", o verbo "estudavam" indica:',o:['uma ação que estava em andamento no passado','uma ação que ainda vai acontecer','uma ação que acontece agora','uma ordem'],e:'O pretérito imperfeito (estudavam) mostra uma ação em andamento no passado.'}]},
+{t:'Pronomes',quem:'Zé Pronome',lugar:'Oficina Mecânica',placa:'OFICINA',cor:'#00a6c8',qs:[
+ {p:'Em "Maria encontrou o livro e guardou-o na mochila", o pronome "o" substitui:',o:['o livro','Maria','a mochila','encontrou'],e:'O pronome "o" retoma "o livro" e evita repeti-lo.'},
+ {p:'Qual destas palavras é pronome pessoal do caso reto?',o:['nós','me','lhe','conosco'],e:'Os pronomes retos são eu, tu, ele/ela, nós, vós, eles/elas. Me, lhe e conosco são oblíquos.'},
+ {p:'Em "Esta bolsa é minha", a palavra "minha" é pronome:',o:['possessivo','demonstrativo','pessoal','interrogativo'],e:'"Minha" indica a quem pertence a bolsa: é possessivo.'},
+ {p:'Em "Aquele prédio é muito alto", a palavra "aquele" é pronome:',o:['demonstrativo','possessivo','indefinido','relativo'],e:'"Aquele" aponta a posição de algo em relação a quem fala: é demonstrativo.'},
+ {p:'Qual é a melhor reescrita para evitar a repetição em "Pedro chegou. Pedro trouxe um bolo."?',o:['Pedro chegou. Ele trouxe um bolo.','Pedro chegou. Eles trouxe um bolo.','Pedro chegou. Nós trouxe um bolo.','Pedro chegou. Lhe trouxe um bolo.'],e:'"Ele" retoma Pedro e combina com o verbo no singular.'},
+ {p:'Em "Alguém deixou a janela aberta", a palavra "alguém" é pronome:',o:['indefinido','pessoal','possessivo','demonstrativo'],e:'"Alguém" refere-se a uma pessoa de modo vago, sem identificá-la: é indefinido.'}]},
+{t:'Pontuação',quem:'Dona Vírgula',lugar:'Padaria',placa:'PADARIA',cor:'#f2b705',qs:[
+ {p:'Qual sinal deve terminar a frase "Que dia lindo"?',o:['ponto de exclamação','ponto de interrogação','vírgula','dois-pontos'],e:'A frase expressa admiração, por isso termina com ponto de exclamação.'},
+ {p:'Em qual frase a vírgula está usada corretamente?',o:['Comprei pão, leite, ovos e café.','Comprei, pão leite ovos e café.','Comprei pão leite, ovos, e, café.','Comprei pão leite ovos e, café.'],e:'A vírgula separa os itens de uma enumeração; antes do "e" final, normalmente não se usa.'},
+ {p:'Em "Lucas, venha jantar!", a vírgula separa:',o:['o vocativo (o chamamento)','o sujeito do verbo','o verbo do complemento','dois adjetivos'],e:'"Lucas" é um chamamento, o vocativo, e deve ser separado por vírgula.'},
+ {p:'Em um diálogo escrito, qual sinal costuma indicar a fala de uma personagem?',o:['travessão','ponto final','reticências','parênteses'],e:'O travessão (—) abre a fala da personagem em muitos textos narrativos.'},
+ {p:'Em "Bem... não sei se vou", as reticências indicam:',o:['hesitação ou pausa no pensamento','o fim de uma pergunta','uma enumeração','uma ordem'],e:'As reticências mostram dúvida, hesitação ou interrupção do pensamento.'},
+ {p:'Em "Levei três frutas: maçã, uva e pera", os dois-pontos servem para:',o:['anunciar uma enumeração','indicar uma pergunta','marcar uma exclamação','separar o sujeito do verbo'],e:'Os dois-pontos anunciam a lista que vem a seguir.'}]},
+{t:'Sentido das palavras',quem:'Dra. Sinônima',lugar:'Biblioteca',placa:'BIBLIOTECA',cor:'#3d7bff',qs:[
+ {p:'Qual é um sinônimo de "contente"?',o:['alegre','triste','cansado','zangado'],e:'Sinônimos têm sentido parecido: contente e alegre.'},
+ {p:'Qual é um antônimo de "generoso"?',o:['egoísta','bondoso','gentil','amável'],e:'Antônimos têm sentidos opostos. Quem é generoso divide; o egoísta pensa só em si.'},
+ {p:'Em "O cantor tem um coração de ouro", a expressão "coração de ouro" quer dizer que ele:',o:['é muito bondoso','é muito rico','tem um problema no coração','usa joias'],e:'É um sentido figurado: "coração de ouro" é ser muito bom com os outros.'},
+ {p:'"O céu estava sereno." Qual palavra pode substituir "sereno" sem mudar o sentido?',o:['calmo','agitado','escuro','barulhento'],e:'Nesse contexto, sereno significa calmo, tranquilo.'},
+ {p:'Em "Ele ficou com a pulga atrás da orelha", a expressão significa que ele ficou:',o:['desconfiado','com coceira','feliz','com sono'],e:'É uma expressão popular: ficar com a pulga atrás da orelha é ficar desconfiado.'},
+ {p:'"Cela" (de prisão) e "sela" (de cavalo) têm o mesmo som, mas escrita e sentido diferentes. Elas são:',o:['homônimas homófonas','sinônimas','antônimas','palavras sem relação'],e:'Palavras com a mesma pronúncia e escrita e sentido diferentes são homônimas homófonas.'}]},
+{t:'Sujeito e concordância',quem:'Prefeito Sujeito',lugar:'Prefeitura',placa:'PREFEITURA',cor:'#c2549d',qs:[
+ {p:'Na frase "As crianças brincavam no pátio", o sujeito é:',o:['As crianças','brincavam','no pátio','brincavam no pátio'],e:'Quem brincava? As crianças. Esse é o sujeito.'},
+ {p:'Qual frase está com a concordância correta?',o:['Os meninos chegaram cedo.','Os meninos chegou cedo.','O menino chegaram cedo.','Os menino chegaram cedo.'],e:'O verbo concorda com o sujeito: "os meninos" (plural) pede "chegaram".'},
+ {p:'Em "Fomos ao cinema ontem", o sujeito é:',o:['nós (sujeito oculto)','cinema','ontem','fomos'],e:'O sujeito não aparece escrito, mas a terminação de "fomos" indica "nós".'},
+ {p:'Qual é o predicado da frase "O vento forte derrubou a árvore"?',o:['derrubou a árvore','O vento forte','forte','O vento'],e:'O predicado é o que se diz do sujeito (o vento forte): derrubou a árvore.'},
+ {p:'Qual frase está de acordo com a norma-padrão?',o:['Faltam dois dias para as férias.','Falta dois dias para as férias.','Faltou dois dias para as férias.','Faltará dois dias para as férias.'],e:'O sujeito é "dois dias" (plural), mesmo vindo depois do verbo. Por isso: faltam.'},
+ {p:'Complete: "O professor e os alunos ___ a sala."',o:['organizaram','organizou','organiza','organizará'],e:'O sujeito é composto (o professor e os alunos) e vem antes do verbo: o verbo vai para o plural.'}]},
+{t:'Figuras de linguagem',quem:'Poeta Lua',lugar:'Teatro Municipal',placa:'TEATRO',cor:'#ff5fa2',qs:[
+ {p:'"O vento sussurrava segredos para as árvores." Que recurso aparece nessa frase?',o:['personificação','onomatopeia','comparação','rima'],e:'O vento recebe uma ação humana (sussurrar segredos): é personificação.'},
+ {p:'"Plim, plim! A chuva começou." A expressão "plim, plim" é uma:',o:['onomatopeia','personificação','metáfora','comparação'],e:'Onomatopeia é a palavra que imita um som.'},
+ {p:'"Ela é rápida como um raio." Que figura de linguagem é essa?',o:['comparação','metáfora','personificação','onomatopeia'],e:'A palavra "como" liga os dois termos comparados: é comparação.'},
+ {p:'"Aquela sala de aula era um forno." Que figura de linguagem é essa?',o:['metáfora','comparação','onomatopeia','personificação'],e:'A sala é chamada de forno sem a palavra "como": é metáfora.'},
+ {p:'"Já te disse um milhão de vezes!" Nessa frase há:',o:['exagero (hipérbole)','comparação','onomatopeia','personificação'],e:'"Um milhão de vezes" exagera para dar ênfase: é hipérbole.'},
+ {p:'Qual destas frases tem uma comparação?',o:['Seus olhos brilhavam como estrelas.','Seus olhos são estrelas.','A estrela piscou para mim.','Tic-tac, fazia o relógio.'],e:'Só a primeira usa "como" para comparar. A segunda é metáfora; a terceira, personificação; a quarta, onomatopeia.'}]},
+{t:'Gêneros e leitura',quem:'Repórter Notícia',lugar:'Rádio da Cidade',placa:'RÁDIO',cor:'#ff6b4a',qs:[
+ {p:'Um texto curto, com animais que falam e agem como pessoas e uma lição de moral no final, é uma:',o:['fábula','notícia','receita','carta'],e:'A fábula tem animais como personagens e termina com uma moral.'},
+ {p:'Qual é a principal finalidade de uma notícia?',o:['informar sobre um fato recente','ensinar a fazer um prato','convencer a comprar um produto','contar uma história com moral'],e:'A notícia informa o leitor sobre fatos atuais.'},
+ {p:'Em uma receita, a parte "Modo de preparo" apresenta:',o:['os passos para fazer o prato','a lista de ingredientes','a opinião do autor','a moral da história'],e:'O modo de preparo traz as instruções, em sequência.'},
+ {p:'"Lia chegou molhada à escola e reclamou que tinha esquecido o guarda-chuva." O que se pode concluir?',o:['Estava chovendo.','Lia foi nadar.','Lia não gosta da escola.','Era um dia de sol forte.'],e:'As pistas "molhada" e "guarda-chuva" permitem inferir que chovia.'},
+ {p:'Um anúncio publicitário tem como objetivo principal:',o:['convencer o leitor a comprar ou aderir a algo','narrar uma aventura','registrar o dia a dia em um diário','explicar uma regra de gramática'],e:'O anúncio busca persuadir o leitor.'},
+ {p:'"Pedro olhou o boletim, sorriu e correu para abraçar a mãe." Pelas atitudes de Pedro, é provável que:',o:['ele tenha tirado boas notas','ele tenha tirado notas baixas','ele esteja com medo','ele não tenha visto o boletim'],e:'Sorrir e correr para abraçar a mãe são pistas de alegria com o resultado.'}]}
+];
+
+/* ================= UTILITÁRIOS ================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ');
+function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}h^=h>>>13;h=Math.imul(h,0x5bd1e995)>>>0;h^=h>>>15;return h>>>0}
+function rngFrom(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(arr,r){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const fmtT=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+$('topics').innerHTML=TEMAS.map(t=>`<span style="background:${t.cor}">${esc(t.t)}</span>`).join('');
+
+/* ================= RANKING ================= */
+let db=null,remote=null,remoteErr=false,lastId=null,writeFail=false;
+const localKey='cdp-ranking-v1';
+function localList(){return ls.get(localKey,[])}
+function rows(){if(remote&&writeFail){const ids=new Set(remote.map(r=>r.id));return remote.concat(localList().filter(r=>r.id===lastId&&!ids.has(r.id)))}return remote||localList()}
+function rankHTML(sel){
+  const list=rows().slice().sort((a,b)=>(b.pontos-a.pontos)||(a.tempo-b.tempo));
+  const turmas=[...new Set(list.map(r=>String(r.turma||'')))].filter(Boolean).sort();
+  const f=sel&&turmas.includes(sel)?sel:'';
+  const shown=list.filter(r=>!f||String(r.turma)===f).slice(0,25);
+  const src=writeFail?'Seu último resultado ficou salvo só neste aparelho: esta conta não tem permissão para gravar no ranking compartilhado.':remote?'Ranking compartilhado: atualiza ao vivo para todos que abrirem este jogo.':(db&&!remoteErr?'Carregando ranking compartilhado…':'Ranking deste aparelho (o ranking compartilhado não está disponível nesta visualização).');
+  return `<div class="rk-head"><h2>Ranking</h2><label style="font-size:14px;font-weight:800">Turma <select data-rk>${['<option value="">Todas</option>'].concat(turmas.map(t=>`<option ${t===f?'selected':''} value="${esc(t)}">${esc(t)}</option>`)).join('')}</select></label></div>
+  <p class="src">${src}</p>
+  ${shown.length?`<table><thead><tr><th class="pos">#</th><th>Nome</th><th>Turma</th><th class="n">Pontos</th><th class="n">Acertos</th><th class="n">Tempo</th></tr></thead><tbody>${shown.map((r,i)=>`<tr class="${r.id===lastId?'me':''}"><td class="pos">${i+1}</td><td>${esc(r.nome)}</td><td>${esc(r.turma)}</td><td class="n">${esc(Number(r.pontos)||0)}</td><td class="n">${esc(Number(r.acertos)||0)}/10</td><td class="n">${esc(fmtT(Number(r.tempo)||0))}</td></tr>`).join('')}</tbody></table>`:'<p class="empty">Ninguém jogou ainda. Seja o primeiro nome do ranking!</p>'}
+  <div class="tools"><button class="btn ghost" type="button" data-copy>Copiar ranking (planilha)</button><span data-msg style="align-self:center;font-size:13px;font-weight:800"></span></div>`;
+}
+let rkFilter='';
+function renderRanks(){for(const id of ['rkStart','rkEnd']){const el=$(id);if(el)el.innerHTML=rankHTML(rkFilter)}}
+document.addEventListener('change',e=>{if(e.target.matches('[data-rk]')){rkFilter=e.target.value;renderRanks()}});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-copy]');if(!b)return;
+  const list=rows().slice().sort((a,b)=>(b.pontos-a.pontos)||(a.tempo-b.tempo)).filter(r=>!rkFilter||String(r.turma)===rkFilter);
+  const txt=['Posição\tNome\tTurma\tPontos\tAcertos\tTempo\tRota'].concat(list.map((r,i)=>[i+1,r.nome,r.turma,r.pontos,r.acertos+'/10',fmtT(r.tempo),r.rota].join('\t'))).join('\n');
+  const msg=b.parentNode.querySelector('[data-msg]');
+  navigator.clipboard.writeText(txt).then(()=>{msg.textContent='Copiado! Cole numa planilha.'},()=>{msg.textContent='Não foi possível copiar aqui.'});
+});
+renderRanks();
+(async()=>{
+  try{db=await window.claude?.use?.('db')}catch(e){db=null}
+  if(!db){renderRanks();return}
+  renderRanks();
+  const timer=setTimeout(()=>{if(!remote){remoteErr=true;renderRanks()}},10000);
+  try{
+    db.collection('ranking').orderBy('pontos','desc').limit(300).onSnapshot(snap=>{
+      remote=snap.docs.map(d=>Object.assign({id:d.id},d.data()));
+      if(!snap.metadata.fromCache)clearTimeout(timer);
+      remoteErr=false;renderRanks();
+    },()=>{clearTimeout(timer);remoteErr=true;remote=null;renderRanks()});
+  }catch(e){clearTimeout(timer);remoteErr=true;renderRanks()}
+})();
+async function saveScore(entry){
+  const id='r'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
+  entry.id=id;lastId=id;
+  const loc=localList();loc.push(entry);ls.set(localKey,loc.slice(-300));
+  if(db&&!remoteErr){
+    const body=Object.assign({},entry);delete body.id;
+    try{await db.collection('ranking').doc(id).set(body)}catch(e){writeFail=true}
+  }
+  renderRanks();
+}
+
+/* ================= CIDADE ================= */
+const P=480,RW=120,BS=360,NB=5,W=P*NB+RW; // período, largura da rua, quadra, nº quadras, mundo
+const GRID=[['B',0,'P',1,'B'],[2,'B',3,'B',4],['P',5,'W',6,'P'],[7,'B',8,'B',9],['B','P','B','B','B']];
+const LAND=[];GRID.forEach((r,by)=>r.forEach((t,bx)=>{if(typeof t==='number')LAND[t]={bx,by,x:bx*P+RW+BS/2,y:(by+1)*P+RW/2}}));
+function cellType(x,y){if(x<0||y<0||x>=W||y>=W)return'X';const lx=x%P,ly=y%P;if(lx<RW||ly<RW)return'R';const bx=Math.floor(x/P),by=Math.floor(y/P);if(bx>=NB||by>=NB)return'R';const t=GRID[by][bx];return typeof t==='number'?'L':t}
+const solid=(x,y)=>{const t=cellType(x,y);return t==='X'||t==='B'||t==='L'||t==='W'};
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+let city=null,miniBase=null;
+function buildCity(){
+  city=document.createElement('canvas');city.width=W;city.height=W;const c=city.getContext('2d');
+  const r=rngFrom(77);
+  c.fillStyle='#3b3d46';c.fillRect(0,0,W,W);
+  // faixas centrais
+  c.fillStyle='#f2d16b';
+  for(let k=0;k<=NB;k++){const m=k*P+RW/2-2;for(let s=0;s<W;s+=48){const inInt=(s%P)<RW+10||(s%P)>P-10;if(!inInt){c.fillRect(s,m,26,4);c.fillRect(m,s,4,26)}}}
+  // faixas de pedestre
+  c.fillStyle='rgba(255,255,255,.85)';
+  for(let i=0;i<=NB;i++)for(let j=0;j<=NB;j++){const x=i*P,y=j*P;for(let s=8;s<RW-8;s+=16){if(j<NB)c.fillRect(x+s,y+RW+4,9,22);if(j>0)c.fillRect(x+s,y-26,9,22);if(i<NB)c.fillRect(x+RW+4,y+s,22,9);if(i>0)c.fillRect(x-26,y+s,22,9)}}
+  const roofs=['#e8735a','#f2c14e','#5aa9e6','#7fc8a9','#c38fe0','#ef8fa3','#9aa5b1','#e9a15e'];
+  for(let by=0;by<NB;by++)for(let bx=0;bx<NB;bx++){
+    const t=GRID[by][bx],x0=bx*P+RW,y0=by*P+RW;
+    c.fillStyle='#d8cfc2';c.fillRect(x0,y0,BS,BS);c.strokeStyle='#8f8578';c.lineWidth=3;c.strokeRect(x0+1.5,y0+1.5,BS-3,BS-3);
+    const ix=x0+16,iy=y0+16,is=BS-32;
+    if(t==='B'){
+      const h=(is-14)/2;
+      for(let a=0;a<2;a++)for(let b=0;b<2;b++){
+        const bx2=ix+a*(h+14),by2=iy+b*(h+14),col=roofs[Math.floor(r()*roofs.length)];
+        c.fillStyle='rgba(0,0,0,.28)';c.fillRect(bx2+10,by2+10,h,h);
+        c.fillStyle=col;c.fillRect(bx2,by2,h,h);
+        c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=4;c.strokeRect(bx2+6,by2+6,h-12,h-12);
+        c.fillStyle='rgba(0,0,0,.18)';for(let n=0;n<3;n++){const s=14+r()*14;c.fillRect(bx2+16+r()*(h-50),by2+16+r()*(h-50),s,s)}
+        if(r()>.5){c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(bx2+h-28,by2+28,12,0,7);c.fill()}
+      }
+    }else if(t==='P'){
+      c.fillStyle='#69b34c';c.fillRect(ix-6,iy-6,is+12,is+12);
+      c.strokeStyle='#e8d39a';c.lineWidth=18;c.beginPath();c.moveTo(ix,iy+is/2);c.quadraticCurveTo(ix+is/2,iy+is*0.2,ix+is,iy+is/2);c.stroke();
+      c.beginPath();c.moveTo(ix+is/2,iy);c.lineTo(ix+is/2,iy+is);c.stroke();
+      c.fillStyle='#5aa9e6';c.beginPath();c.arc(ix+is/2,iy+is/2,26,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=4;c.stroke();
+      for(let n=0;n<16;n++){const tx=ix+20+r()*(is-40),ty=iy+20+r()*(is-40);if(Math.abs(tx-(ix+is/2))<40&&Math.abs(ty-(iy+is/2))<40)continue;const tr=14+r()*12;c.fillStyle='rgba(0,0,0,.25)';c.beginPath();c.arc(tx+6,ty+6,tr,0,7);c.fill();c.fillStyle='#2f7d3a';c.beginPath();c.arc(tx,ty,tr,0,7);c.fill();c.fillStyle='#4fa64f';c.beginPath();c.arc(tx-tr*.3,ty-tr*.3,tr*.5,0,7);c.fill()}
+    }else if(t==='W'){
+      c.fillStyle='#e8d39a';c.fillRect(ix-6,iy-6,is+12,is+12);
+      c.fillStyle='#2f8fc9';rr(c,ix+10,iy+10,is-20,is-20,60);c.fill();
+      c.strokeStyle='rgba(255,255,255,.45)';c.lineWidth=3;for(let n=0;n<9;n++){const wx=ix+50+r()*(is-120),wy=iy+50+r()*(is-110);c.beginPath();c.moveTo(wx,wy);c.quadraticCurveTo(wx+12,wy-8,wx+24,wy);c.quadraticCurveTo(wx+36,wy+8,wx+48,wy);c.stroke()}
+      c.fillStyle='#8a5a3b';c.fillRect(ix+is/2-12,iy+is-60,24,56);
+    }else{
+      const T=TEMAS[t];
+      c.fillStyle='rgba(0,0,0,.3)';c.fillRect(ix+12,iy+12,is,is);
+      c.fillStyle=T.cor;c.fillRect(ix,iy,is,is);
+      c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=10;c.strokeRect(ix+5,iy+5,is-10,is-10);
+      c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=3;c.strokeRect(ix+22,iy+22,is-44,is-44);
+      c.fillStyle='#fff';c.beginPath();c.arc(ix+is/2,iy+is/2-34,46,0,7);c.fill();
+      c.fillStyle=T.cor;c.font='54px Bungee, Impact, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(String(t+1),ix+is/2,iy+is/2-30);
+      c.font='30px Bungee, Impact, sans-serif';c.lineWidth=7;c.strokeStyle='#2b0d12';c.strokeText(T.placa,ix+is/2,iy+is/2+50,is-40);c.fillStyle='#fff';c.fillText(T.placa,ix+is/2,iy+is/2+50,is-40);
+      // entrada voltada para a rua de baixo
+      c.fillStyle='#2b0d12';c.fillRect(x0+BS/2-30,y0+BS-16,60,16);
+    }
+  }
+  miniBase=document.createElement('canvas');miniBase.width=300;miniBase.height=300;miniBase.getContext('2d').drawImage(city,0,0,300,300);
+}
+
+/* ================= ESTADO DO JOGO ================= */
+const cv=$('cv'),ctx=cv.getContext('2d'),mini=$('mini'),mctx=mini.getContext('2d');
+let S=null,raf=0,last=0,keys={},dpr=1,vw=0,vh=0,zoom=1,audio=null;
+function beep(f,d,type){try{if(!audio)audio=new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type=type||'square';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d);o.stop(audio.currentTime+d)}catch(e){}}
+function roadPoint(r){const k=Math.floor(r()*(NB+1)),along=r()*W,off=25+r()*70;return r()<.5?{x:along,y:k*P+off}:{x:k*P+off,y:along}}
+function newGame(nome,turma){
+  const key=norm(nome)+'|'+norm(turma),tentKey='cdp-tent-'+key,tent=ls.get(tentKey,0)+1;ls.set(tentKey,tent);
+  const seed=hashStr(key+'|'+tent),r=rngFrom(seed);
+  const order=shuffle([0,1,2,3,4,5,6,7,8,9],r);
+  const missions=order.map(ti=>{const T=TEMAS[ti],qi=Math.floor(r()*T.qs.length),q=T.qs[qi];const perm=shuffle([0,1,2,3],r);return{ti,qi,p:q.p,e:q.e,o:perm.map(i=>q.o[i]),c:perm.indexOf(0),ans:-1}});
+  const npcs=[];for(let i=0;i<14;i++){const h=r()<.5,k=Math.floor(r()*(NB+1)),d=r()<.5?1:-1;npcs.push({h,d,x:h?r()*W:(k*P+(d>0?35:85)),y:h?(k*P+(d>0?85:35)):r()*W,v:90+r()*70,col:['#f7f7f7','#2d6cdf','#f2c14e','#7fc8a9','#9b5de5','#e8735a'][Math.floor(r()*6)],hit:0})}
+  const books=[];for(let i=0;i<14;i++)books.push(roadPoint(r));
+  S={nome,turma,rota:(seed.toString(36).toUpperCase().slice(-4))+'-'+tent,r,missions,mi:0,pts:0,streak:0,hits:0,stars:0,
+     car:{x:3*P+RW/2,y:3*P+RW/2,a:-Math.PI/2,v:0},npcs,books,fiscal:null,chaseT:0,
+     time:0,mt:0,paused:false,dlg:false,fx:[],shake:0,bumpCd:0,toastT:0,ended:false};
+}
+function toast(txt,col){const t=$('toast');t.textContent=txt;t.style.color=col||'#fff';t.style.opacity=1;S.toastT=1.8}
+function fx(x,y,txt,col){S.fx.push({x,y,txt,col,t:1.2})}
+
+/* ================= HUD ================= */
+const starSVG=on=>`<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="${on?'#ffd23f':'rgba(255,255,255,.25)'}" stroke="#000" stroke-width="1.5"/></svg>`;
+function hud(){
+  $('pts').textContent=S.pts+' pts';
+  const mult=S.streak>1?(1+.2*Math.min(S.streak-1,5)):1;
+  $('combo').textContent=S.streak>1?`Sequência ${S.streak} · ×${mult.toFixed(1)}`:'';
+  $('info').textContent=`Missão ${Math.min(S.mi+1,10)}/10 · ${fmtT(S.time)} · Rota ${S.rota}`;
+  $('stars').innerHTML=[0,1,2,3,4].map(i=>starSVG(i<S.stars)).join('');
+  $('chase').textContent=S.fiscal?`Fiscal na cola! ${Math.ceil(S.chaseT)}s`:'';
+  const m=S.missions[S.mi];
+  if(m){const T=TEMAS[m.ti];$('mission').innerHTML=`<b>Missão ${S.mi+1}</b> · Vá até ${esc(T.lugar)} (prédio ${m.ti+1}) e fale com ${esc(T.quem)}`}
+}
+
+/* ================= DIÁLOGO DA MISSÃO ================= */
+function avatar(T){const ini=T.quem.split(' ').map(w=>w[0]).join('').slice(0,2);return `<svg class="av" viewBox="0 0 58 58"><circle cx="29" cy="29" r="27" fill="#fff"/><circle cx="29" cy="24" r="11" fill="${T.cor}"/><path d="M10 50c4-12 34-12 38 0" fill="${T.cor}"/><text x="29" y="28" text-anchor="middle" font-family="Bungee,Impact" font-size="10" fill="#fff">${esc(ini)}</text></svg>`}
+function openMission(){
+  const m=S.missions[S.mi],T=TEMAS[m.ti];S.dlg=true;S.car.v=0;beep(660,.12,'triangle');
+  $('card').innerHTML=`<div class="card-top" style="background:${T.cor}">${avatar(T)}<div><h3>${esc(T.quem)}</h3><small>${esc(T.lugar)} · ${esc(T.t)}</small></div></div>
+  <div class="card-b"><p class="q">${esc(m.p)}</p><div class="opts">${m.o.map((o,i)=>`<button class="opt" type="button" data-i="${i}"><span class="l">${'ABCD'[i]}</span><span>${esc(o)}</span></button>`).join('')}</div><div class="fb" id="fb"></div></div>`;
+  $('dlg').classList.add('on');
+  const first=$('card').querySelector('.opt');if(first)first.focus();
+}
+function answer(i){
+  const m=S.missions[S.mi];if(!S.dlg||m.ans>=0)return;
+  m.ans=i;const ok=i===m.c,T=TEMAS[m.ti];
+  const btns=$('card').querySelectorAll('.opt');btns.forEach((b,k)=>{b.disabled=true;if(k===m.c)b.classList.add('ok');else if(k===i)b.classList.add('no')});
+  let msg;
+  if(ok){S.streak++;S.hits++;const bonus=Math.max(0,Math.round(60-S.mt*1.2)),mult=1+.2*Math.min(S.streak-1,5),g=Math.round((100+bonus)*mult);m.pts=g;S.pts+=g;msg=`<strong>Missão cumprida! +${g}</strong><br>${esc(m.e)}`;beep(880,.1,'square');setTimeout(()=>beep(1320,.15,'square'),110)}
+  else{S.streak=0;m.pts=0;S.stars=Math.min(5,S.stars+1);msg=`<strong>Ops! A resposta era "${esc(m.o[m.c])}".</strong><br>${esc(m.e)}<br><em>O Fiscal da Gramática viu tudo e vai atrás de você!</em>`;beep(180,.35,'sawtooth')}
+  const fb=$('fb');fb.className='fb on '+(ok?'ok':'no');fb.innerHTML=msg+`<button class="btn" type="button" id="cont">${S.mi<9?'Próxima missão':'Ver resultado'}</button>`;
+  $('cont').focus();
+}
+function closeMission(){
+  const m=S.missions[S.mi];if(m.ans<0)return;
+  $('dlg').classList.remove('on');S.dlg=false;
+  const wrong=m.ans!==m.c;
+  S.mi++;S.mt=0;
+  if(S.mi>=10){finish();return}
+  if(wrong)startChase();
+  toast(`Missão ${S.mi+1}: ${TEMAS[S.missions[S.mi].ti].lugar}`,'#ffd23f');
+  hud();
+}
+$('card').addEventListener('click',e=>{const o=e.target.closest('.opt');if(o){answer(+o.dataset.i);return}if(e.target.id==='cont')closeMission()});
+
+/* ================= FISCAL ================= */
+const nodeOf=(x,y)=>({i:clamp(Math.round((x-RW/2)/P),0,NB),j:clamp(Math.round((y-RW/2)/P),0,NB)});
+const nodeXY=(i,j)=>({x:i*P+RW/2,y:j*P+RW/2});
+function startChase(){
+  const pn=nodeOf(S.car.x,S.car.y);let i=pn.i+(pn.i>2?-2:2),j=pn.j+(S.r()<.5?1:-1);i=clamp(i,0,NB);j=clamp(j,0,NB);
+  const p=nodeXY(i,j);S.fiscal={x:p.x,y:p.y,tx:p.x,ty:p.y,a:0};S.chaseT=20;toast('Fiscal da Gramática na rua!','#ffd23f');
+}
+function updFiscal(dt){
+  const f=S.fiscal;if(!f)return;
+  S.chaseT-=dt;
+  if(S.chaseT<=0){S.fiscal=null;S.stars=0;toast('Você despistou o Fiscal!','#9cff57');return}
+  const c=S.car,fn=nodeOf(f.x,f.y),pn=nodeOf(c.x,c.y);
+  const atNode=Math.hypot(f.x-f.tx,f.y-f.ty)<6;
+  const dPlayer=Math.hypot(c.x-f.x,c.y-f.y);
+  if(dPlayer<P*0.55&&(Math.abs(c.x-f.x)<RW||Math.abs(c.y-f.y)<RW)){f.tx=c.x;f.ty=c.y}
+  else if(atNode&&Math.hypot(f.x-nodeXY(fn.i,fn.j).x,f.y-nodeXY(fn.i,fn.j).y)>6){const p=nodeXY(fn.i,fn.j);f.tx=p.x;f.ty=p.y}
+  else if(atNode){let {i,j}=fn;const di=pn.i-i,dj=pn.j-j;if(di===0&&dj===0){f.tx=c.x;f.ty=c.y}else{if(Math.abs(di)>=Math.abs(dj))i+=Math.sign(di);else j+=Math.sign(dj);const p=nodeXY(i,j);f.tx=p.x;f.ty=p.y}}
+  const sp=(200+S.stars*22)*dt,dx=f.tx-f.x,dy=f.ty-f.y,d=Math.hypot(dx,dy);
+  if(d>0.5){const k=Math.min(1,sp/d);f.x+=dx*k;f.y+=dy*k;f.a=Math.atan2(dy,dx)}
+  if(dPlayer<30){const loss=30*S.stars;S.pts=Math.max(0,S.pts-loss);fx(c.x,c.y-30,'-'+loss,'#ff6b6b');toast(`Pego! Aula extra: -${loss} pts`,'#ff6b6b');S.fiscal=null;S.stars=0;S.shake=.4;beep(120,.4,'sawtooth')}
+}
+
+/* ================= ATUALIZAÇÃO ================= */
+function update(dt){
+  S.time+=dt;S.mt+=dt;
+  const c=S.car,up=keys.up,dn=keys.down,lf=keys.left,rt=keys.right;
+  const grass=cellType(c.x,c.y)==='P',maxV=grass?150:330;
+  if(up)c.v+=420*dt;else if(dn)c.v-=(c.v>0?620:260)*dt;else c.v*=Math.max(0,1-1.4*dt);
+  c.v=clamp(c.v,-140,maxV);if(c.v>maxV)c.v=maxV;
+  const steer=(rt?1:0)-(lf?1:0);c.a+=steer*3.0*dt*clamp(c.v/180,-1,1);
+  const nx=c.x+Math.cos(c.a)*c.v*dt,ny=c.y+Math.sin(c.a)*c.v*dt;
+  const R=13;let hit=false;for(let k=0;k<8;k++){const an=k*Math.PI/4;if(solid(nx+Math.cos(an)*R,ny+Math.sin(an)*R)){hit=true;break}}
+  if(hit){
+    // tenta deslizar em um eixo
+    let okx=true,oky=true;for(let k=0;k<8;k++){const an=k*Math.PI/4;if(solid(nx+Math.cos(an)*R,c.y+Math.sin(an)*R))okx=false;if(solid(c.x+Math.cos(an)*R,ny+Math.sin(an)*R))oky=false}
+    if(okx)c.x=nx;else if(oky)c.y=ny;
+    c.v*=okx||oky?.7:-.3;if(!okx&&!oky&&Math.abs(c.v)>60)S.shake=.15;
+  }else{c.x=nx;c.y=ny}
+  // trânsito
+  S.bumpCd-=dt;
+  for(const n of S.npcs){if(n.h){n.x+=n.v*n.d*dt;if(n.x>W+40)n.x=-40;if(n.x<-40)n.x=W+40}else{n.y+=n.v*n.d*dt;if(n.y>W+40)n.y=-40;if(n.y<-40)n.y=W+40}
+    n.hit-=dt;if(S.bumpCd<=0&&Math.hypot(n.x-c.x,n.y-c.y)<28){const a=Math.atan2(c.y-n.y,c.x-n.x);c.x+=Math.cos(a)*10;c.y+=Math.sin(a)*10;if(solid(c.x,c.y)){c.x-=Math.cos(a)*10;c.y-=Math.sin(a)*10}c.v*=-.3;S.bumpCd=.6;n.hit=.6;S.shake=.2;fx(n.x,n.y-26,'Bi-bi!','#fff');beep(420,.15,'square')}}
+  // livros
+  for(const b of S.books){if(Math.hypot(b.x-c.x,b.y-c.y)<26){S.pts+=10;fx(b.x,b.y-20,'+10 livro','#9cff57');Object.assign(b,roadPoint(S.r));beep(990,.08,'triangle')}}
+  updFiscal(dt);
+  // missão
+  const m=S.missions[S.mi];if(m){const L=LAND[m.ti];if(Math.hypot(L.x-c.x,L.y-c.y)<48)openMission()}
+  for(const f of S.fx){f.t-=dt;f.y-=30*dt}S.fx=S.fx.filter(f=>f.t>0);
+  if(S.shake>0)S.shake-=dt;
+  if(S.toastT>0){S.toastT-=dt;if(S.toastT<=0)$('toast').style.opacity=0}
+}
+
+/* ================= DESENHO ================= */
+function drawCar(x,y,a,body,roof,opt){
+  ctx.save();ctx.translate(x,y);ctx.rotate(a);
+  ctx.fillStyle='rgba(0,0,0,.35)';rr(ctx,-16,-7,36,20,6);ctx.fill();
+  ctx.fillStyle=body;rr(ctx,-18,-10,36,20,6);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#bfe9ff';rr(ctx,4,-7,7,14,2);ctx.fill();ctx.fillStyle='#8cc7e6';rr(ctx,-13,-7,5,14,2);ctx.fill();
+  ctx.fillStyle=roof;rr(ctx,-8,-7,12,14,3);ctx.fill();
+  ctx.fillStyle='#ffe27a';ctx.fillRect(16,-8,3,4);ctx.fillRect(16,4,3,4);
+  ctx.fillStyle='#ff3b3b';ctx.fillRect(-19,-8,2,4);ctx.fillRect(-19,4,2,4);
+  if(opt==='fiscal'){const on=Math.floor(performance.now()/180)%2;ctx.fillStyle=on?'#2d6cdf':'#ffd23f';ctx.fillRect(-4,-7,5,7);ctx.fillStyle=on?'#ffd23f':'#2d6cdf';ctx.fillRect(-4,0,5,7)}
+  ctx.restore();
+}
+function draw(){
+  const c=S.car,vwz=vw/zoom,vhz=vh/zoom;
+  let cx=clamp(c.x-vwz/2,0,Math.max(0,W-vwz)),cy=clamp(c.y-vhz/2,0,Math.max(0,W-vhz));
+  if(S.shake>0){cx+=(Math.random()-.5)*8;cy+=(Math.random()-.5)*8}
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#1e2a2e';ctx.fillRect(0,0,vw,vh);
+  ctx.setTransform(dpr*zoom,0,0,dpr*zoom,-cx*dpr*zoom,-cy*dpr*zoom);
+  const sx=Math.max(0,Math.floor(cx)),sy=Math.max(0,Math.floor(cy)),sw=Math.min(W-sx,Math.ceil(vwz)+2),sh=Math.min(W-sy,Math.ceil(vhz)+2);
+  if(sw>0&&sh>0)ctx.drawImage(city,sx,sy,sw,sh,sx,sy,sw,sh);
+  const t=performance.now()/1000,m=S.missions[S.mi];
+  if(m){const L=LAND[m.ti],pr=34+Math.sin(t*5)*6;ctx.fillStyle='rgba(255,210,63,.25)';ctx.beginPath();ctx.arc(L.x,L.y,pr+14,0,7);ctx.fill();ctx.strokeStyle='#ffd23f';ctx.lineWidth=5;ctx.beginPath();ctx.arc(L.x,L.y,pr,0,7);ctx.stroke();ctx.fillStyle='#ffd23f';ctx.font='20px Bungee, Impact, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('?',L.x,L.y)}
+  for(const b of S.books){const bob=Math.sin(t*4+b.x)*2;ctx.save();ctx.translate(b.x,b.y+bob);ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(-9,-5,20,16);ctx.fillStyle='#3d7bff';ctx.fillRect(-11,-8,10,16);ctx.fillStyle='#ff5fa2';ctx.fillRect(1,-8,10,16);ctx.fillStyle='#fff';ctx.fillRect(-1,-8,2,16);ctx.restore()}
+  for(const n of S.npcs)drawCar(n.x,n.y,n.h?(n.d>0?0:Math.PI):(n.d>0?Math.PI/2:-Math.PI/2),n.hit>0?'#ffb3b3':n.col,'rgba(0,0,0,.25)');
+  if(S.fiscal)drawCar(S.fiscal.x,S.fiscal.y,S.fiscal.a,'#ffffff','#1b3a8a','fiscal');
+  drawCar(c.x,c.y,c.a,'#ff3d6e','#c21d4b');
+  // seta GPS em volta do carro
+  if(m){const L=LAND[m.ti],ang=Math.atan2(L.y-c.y,L.x-c.x),d=Math.hypot(L.x-c.x,L.y-c.y);if(d>90){ctx.save();ctx.translate(c.x+Math.cos(ang)*44,c.y+Math.sin(ang)*44);ctx.rotate(ang);ctx.fillStyle='#ffd23f';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(-8,-9);ctx.lineTo(-3,0);ctx.lineTo(-8,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}}
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='18px Bungee, Impact, sans-serif';
+  for(const f of S.fx){ctx.globalAlpha=Math.min(1,f.t*1.5);ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.strokeText(f.txt,f.x,f.y);ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y)}ctx.globalAlpha=1;
+  // luz de fim de tarde
+  ctx.setTransform(dpr,0,0,dpr,0,0);const g=ctx.createRadialGradient(vw/2,vh/2,Math.min(vw,vh)*.35,vw/2,vh/2,Math.max(vw,vh)*.75);g.addColorStop(0,'rgba(255,140,80,0)');g.addColorStop(1,'rgba(120,30,60,.35)');ctx.fillStyle=g;ctx.fillRect(0,0,vw,vh);
+  // radar
+  const ms=mini.width,k=ms/W;mctx.save();mctx.clearRect(0,0,ms,ms);mctx.beginPath();mctx.arc(ms/2,ms/2,ms/2,0,7);mctx.clip();mctx.drawImage(miniBase,0,0,ms,ms);
+  if(m){const L=LAND[m.ti];mctx.fillStyle=Math.floor(t*3)%2?'#ffd23f':'#fff';mctx.beginPath();mctx.arc(L.x*k,L.y*k,6,0,7);mctx.fill();mctx.strokeStyle='#000';mctx.lineWidth=2;mctx.stroke()}
+  if(S.fiscal){mctx.fillStyle=Math.floor(t*5)%2?'#2d6cdf':'#ff3b3b';mctx.beginPath();mctx.arc(S.fiscal.x*k,S.fiscal.y*k,5,0,7);mctx.fill()}
+  mctx.save();mctx.translate(c.x*k,c.y*k);mctx.rotate(c.a);mctx.fillStyle='#ff3d6e';mctx.strokeStyle='#fff';mctx.lineWidth=1.5;mctx.beginPath();mctx.moveTo(7,0);mctx.lineTo(-5,-5);mctx.lineTo(-5,5);mctx.closePath();mctx.fill();mctx.stroke();mctx.restore();
+  mctx.restore();
+}
+let hudT=0;
+function loop(ts){
+  raf=requestAnimationFrame(loop);
+  const dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;
+  if(!S||S.ended)return;
+  if(!S.paused&&!S.dlg)update(dt);
+  draw();
+  hudT-=dt;if(hudT<=0){hud();hudT=.2}
+}
+function resize(){dpr=Math.min(2,window.devicePixelRatio||1);vw=window.innerWidth;vh=window.innerHeight;cv.width=Math.round(vw*dpr);cv.height=Math.round(vh*dpr);zoom=clamp(Math.min(vw,vh)/720,.62,1.15);const ms=vw<600?110:150;mini.width=ms;mini.height=ms}
+window.addEventListener('resize',resize);
+
+/* ================= CONTROLES ================= */
+const KM={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
+window.addEventListener('keydown',e=>{
+  if($('game').hidden||!S)return;
+  if(S.dlg){const m=S.missions[S.mi];const map={Digit1:0,Digit2:1,Digit3:2,Digit4:3,Numpad1:0,Numpad2:1,Numpad3:2,Numpad4:3,KeyA:0,KeyB:1,KeyC:2,KeyD:3};if(m&&m.ans<0&&e.code in map){e.preventDefault();answer(map[e.code])}else if(m&&m.ans>=0&&(e.code==='Enter'||e.code==='Space')){e.preventDefault();closeMission()}return}
+  if(e.code==='KeyP'||e.code==='Escape'){togglePause();return}
+  if(KM[e.code]){keys[KM[e.code]]=true;e.preventDefault()}
+});
+window.addEventListener('keyup',e=>{if(KM[e.code])keys[KM[e.code]]=false});
+window.addEventListener('blur',()=>{keys={}});
+document.querySelectorAll('.touch button').forEach(b=>{
+  const k=b.dataset.k,on=e=>{e.preventDefault();keys[k]=true;try{b.setPointerCapture(e.pointerId)}catch(_){}},off=()=>{keys[k]=false};
+  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
+});
+function togglePause(){if(!S||S.dlg)return;S.paused=!S.paused;$('bPause').textContent=S.paused?'▶':'II';if(S.paused){$('toast').textContent='Pausado';$('toast').style.color='#fff';$('toast').style.opacity=1;S.toastT=0}else $('toast').style.opacity=0}
+$('bPause').addEventListener('click',togglePause);
+let quitArm=0;
+$('bQuit').addEventListener('click',()=>{if(Date.now()-quitArm<2500){goHome()}else{quitArm=Date.now();$('bQuit').textContent='Sair? Toque de novo';setTimeout(()=>{$('bQuit').textContent='Sair'},2500)}});
+
+/* ================= TELAS ================= */
+function show(id){for(const s of ['start','game','end'])$(s).hidden=s!==id;window.scrollTo(0,0)}
+function goHome(){if(S)S.ended=true;keys={};$('dlg').classList.remove('on');show('start');renderRanks()}
+let fontsReady=document.fonts?document.fonts.load('30px Bungee').catch(()=>{}):Promise.resolve();
+async function begin(nome,turma){
+  await fontsReady;if(!city)buildCity();
+  newGame(nome,turma);keys={};show('game');resize();hud();
+  toast(`Missão 1: ${TEMAS[S.missions[0].ti].lugar}`,'#ffd23f');
+  if(!raf)raf=requestAnimationFrame(loop);
+  try{if(!audio)audio=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
+}
+$('f').addEventListener('submit',e=>{
+  e.preventDefault();const nome=$('nome').value.trim(),turma=$('turma').value.trim();
+  if(nome.length<2){$('ferr').textContent='Escreva seu nome (pelo menos 2 letras).';return}
+  if(!turma){$('ferr').textContent='Escreva sua turma.';return}
+  $('ferr').textContent='';begin(nome,turma);
+});
+function titleFor(p){return p>=1500?'Lenda da Cidade das Palavras':p>=1100?'Mestre da Língua':p>=700?'Piloto da Gramática':p>=350?'Motorista das Letras':'Aprendiz das Letras'}
+function finish(){
+  S.ended=true;keys={};
+  $('endWho').textContent=`${S.nome} · ${S.turma} · Rota ${S.rota}`;
+  $('endPts').textContent=S.pts;$('endTitle').textContent=titleFor(S.pts);
+  $('endStats').innerHTML=`<div>${S.hits}/10 acertos</div><div>Tempo ${esc(fmtT(S.time))}</div>`;
+  $('rev').innerHTML=S.missions.map((m,i)=>{const T=TEMAS[m.ti],ok=m.ans===m.c;return `<article class="${ok?'ok':'no'}"><p class="t">Missão ${i+1} · ${esc(T.t)} · ${ok?'acertou (+'+m.pts+')':'errou'}</p><p><b>${esc(m.p)}</b></p>${ok?'':`<p>Sua resposta: ${esc(m.o[m.ans])}</p>`}<p>Resposta correta: <b>${esc(m.o[m.c])}</b></p><p>${esc(m.e)}</p></article>`}).join('');
+  show('end');
+  saveScore({nome:S.nome.slice(0,24),turma:S.turma.slice(0,10),pontos:S.pts,acertos:S.hits,tempo:Math.round(S.time),rota:S.rota,em:Date.now()});
+}
+$('again').addEventListener('click',()=>{if(S)begin(S.nome,S.turma)});
+$('home').addEventListener('click',goHome);
+const lastName=ls.get('cdp-last',null);if(lastName){$('nome').value=lastName.n||'';$('turma').value=lastName.t||''}
+$('f').addEventListener('submit',()=>ls.set('cdp-last',{n:$('nome').value.trim(),t:$('turma').value.trim()}));
+}
+</script>
+</body>
+</html>
